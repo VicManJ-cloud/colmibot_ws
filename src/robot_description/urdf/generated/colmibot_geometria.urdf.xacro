@@ -1,0 +1,547 @@
+<?xml version="1.0"?>
+<!-- ARCHIVO GENERADO - NO EDITAR A MANO -->
+<!-- Lo escribe tools/generar_modelo.py desde el CAD y se sobrescribe. -->
+<!-- Para cambiar geometria: mover la pieza en SolidWorks y regenerar.  -->
+<!-- Para cambiar parametros: editar urdf/colmibot.urdf.xacro.          -->
+<robot name="colmibot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <material name="gris"><color rgba="0.75 0.75 0.78 1"/></material>
+  <material name="oscuro"><color rgba="0.25 0.25 0.28 1"/></material>
+
+  <!-- ===================== MARCO DE SUELO ========================== -->
+  <link name="base_footprint"/>
+  <joint name="joint_base_footprint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 ${altura_chasis}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ===================== ESLABONES =============================== -->
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/base.stl"/>
+      </geometry>
+      <material name="gris"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.2 0.2 0.096"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.296546381"/>
+      <inertia ixx="0.00110892242" ixy="-2.91306878e-06" ixz="2.44626152e-06" iyy="0.0011065976" iyz="8.2874306e-06" izz="0.00186395347"/>
+    </inertial>
+  </link>
+
+  <link name="ruedas_locas">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/ruedas_locas.stl"/>
+      </geometry>
+      <material name="gris"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.189985321 0.05 0.021000391"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.0205088876"/>
+      <inertia ixx="1.9552683e-06" ixy="-5.32696893e-11" ixz="-7.12704287e-14" iyy="0.000132522899" iyz="2.78509584e-12" izz="0.000133541764"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_ruedas_locas" type="fixed">
+    <parent link="base_link"/>
+    <child link="ruedas_locas"/>
+    <origin xyz="-0.00078334533 -4.06762974e-05 -0.0282484608" rpy="0 0 0"/>
+  </joint>
+
+  <link name="interruptores">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/interruptores.stl"/>
+      </geometry>
+      <material name="gris"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.0405947838 0.146566895 0.019569191"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.00791064216"/>
+      <inertia ixx="3.05730457e-05" ixy="4.29973293e-06" ixz="-2.92933195e-09" iyy="1.02382721e-06" iyz="-1.20574618e-10" izz="3.115638e-05"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_interruptores" type="fixed">
+    <parent link="base_link"/>
+    <child link="interruptores"/>
+    <origin xyz="-0.0522120306 -0.00425620256 0.0212067926" rpy="0 0 0"/>
+  </joint>
+
+  <link name="bracket_der">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/bracket_der.stl"/>
+      </geometry>
+      <material name="gris"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.0609996872 0.0499999962 0.0429790077"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.0293003845"/>
+      <inertia ixx="1.0869046e-05" ixy="-7.50486199e-12" ixz="-1.27681415e-11" iyy="9.66908506e-06" iyz="1.96254503e-06" izz="1.49602535e-05"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_bracket_der" type="fixed">
+    <parent link="base_link"/>
+    <child link="bracket_der"/>
+    <origin xyz="-0.00078333846 -0.0552592606 -0.0181880303" rpy="0 0 0"/>
+  </joint>
+
+  <link name="bracket_izq">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/bracket_izq.stl"/>
+      </geometry>
+      <material name="gris"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.0609996872 0.0499999962 0.0429790077"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.0293003845"/>
+      <inertia ixx="1.0869046e-05" ixy="-7.50520264e-12" ixz="1.27679791e-11" iyy="9.66908508e-06" iyz="-1.96254503e-06" izz="1.49602535e-05"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_bracket_izq" type="fixed">
+    <parent link="base_link"/>
+    <child link="bracket_izq"/>
+    <origin xyz="-0.000783287765 0.0551779589 -0.0181880303" rpy="0 0 0"/>
+  </joint>
+
+  <link name="motor_der">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/motor_der.stl"/>
+      </geometry>
+      <material name="gris"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.036878931 0.0900999963 0.0412177873"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.369786912"/>
+      <inertia ixx="0.0003025139" ixy="5.0086969e-17" ixz="3.16764276e-15" iyy="9.42636621e-05" iyz="-1.21189071e-15" izz="0.000292072029"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_motor_der" type="fixed">
+    <parent link="base_link"/>
+    <child link="motor_der"/>
+    <origin xyz="-0.000623080187 -0.0317032043 -0.00678073601" rpy="0 0 0"/>
+  </joint>
+
+  <link name="motor_izq">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/motor_izq.stl"/>
+      </geometry>
+      <material name="gris"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.036878931 0.0900999963 0.0412177874"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.369786912"/>
+      <inertia ixx="0.000302513901" ixy="5.00869691e-17" ixz="-3.16764276e-15" iyy="9.42636624e-05" iyz="1.21189072e-15" izz="0.000292072029"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_motor_izq" type="fixed">
+    <parent link="base_link"/>
+    <child link="motor_izq"/>
+    <origin xyz="-0.000943546038 0.0316219026 -0.00678073601" rpy="0 0 0"/>
+  </joint>
+
+  <link name="llanta_der">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/llanta_der.stl"/>
+      </geometry>
+      <material name="oscuro"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5707963 0 0"/>
+      <geometry><cylinder radius="0.03" length="0.012"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.0177349355"/>
+      <inertia ixx="4.28023322e-06" ixy="2.08574043e-13" ixz="7.52197331e-13" iyy="8.34359253e-06" iyz="-9.93495454e-11" izz="4.28009603e-06"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_llanta_der" type="continuous">
+    <parent link="base_link"/>
+    <child link="llanta_der"/>
+    <origin xyz="-0.000783310148 ${-separacion_llantas/2} -0.0132877892" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <dynamics damping="0.01" friction="0.001"/>
+  </joint>
+
+  <link name="llanta_izq">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/llanta_izq.stl"/>
+      </geometry>
+      <material name="oscuro"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5707963 0 0"/>
+      <geometry><cylinder radius="0.0299977789" length="0.012"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.0177349353"/>
+      <inertia ixx="4.28023315e-06" ixy="-1.49618989e-12" ixz="1.64755005e-12" iyy="8.34359235e-06" iyz="9.9338688e-11" izz="4.28009592e-06"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_llanta_izq" type="continuous">
+    <parent link="base_link"/>
+    <child link="llanta_izq"/>
+    <origin xyz="-0.000783277609 ${separacion_llantas/2} -0.013287789" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <dynamics damping="0.01" friction="0.001"/>
+  </joint>
+
+  <link name="bateria">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/bateria.stl"/>
+      </geometry>
+      <material name="gris"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.0723392715 0.074 0.049"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.228901076"/>
+      <inertia ixx="0.000129040862" ixy="-6.84596307e-08" ixz="1.80796071e-06" iyy="9.73403295e-05" iyz="-1.86563542e-08" izz="0.000190633226"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_bateria" type="fixed">
+    <parent link="base_link"/>
+    <child link="bateria"/>
+    <origin xyz="-0.0557948136 0.000150592389 -0.0064835891" rpy="0 0 0"/>
+  </joint>
+
+  <link name="electronica_control">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/electronica_control.stl"/>
+      </geometry>
+      <material name="gris"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.174431 0.115307404 0.0610999985"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.172359712"/>
+      <inertia ixx="0.000283291304" ixy="-9.29485104e-05" ixz="0.000190329485" iyy="0.000583343473" iyz="8.72188979e-05" izz="0.00062103804"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_electronica_control" type="fixed">
+    <parent link="base_link"/>
+    <child link="electronica_control"/>
+    <origin xyz="0.000543496971 -0.0284944982 0.0249128086" rpy="0 0 0"/>
+  </joint>
+
+  <link name="raspi5">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/raspi5.stl"/>
+      </geometry>
+      <material name="gris"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.0909799995 0.0609485512 0.0214300003"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.139491745"/>
+      <inertia ixx="4.75658234e-05" ixy="-1.18670087e-06" ixz="1.56438831e-06" iyy="0.000108837992" iyz="-1.10153155e-06" izz="0.000148914759"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_raspi5" type="fixed">
+    <parent link="base_link"/>
+    <child link="raspi5"/>
+    <origin xyz="-0.00678921911 0.048529252 0.0331396418" rpy="0 0 0"/>
+  </joint>
+
+  <link name="cooler">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/cooler.stl"/>
+      </geometry>
+      <material name="gris"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.0647549973 0.0435192242 0.0142178421"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.0081317656"/>
+      <inertia ixx="1.13571326e-06" ixy="-3.95668165e-07" ixz="9.7770616e-09" iyy="2.26298233e-06" iyz="1.27409273e-08" izz="3.25733504e-06"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_cooler" type="fixed">
+    <parent link="raspi5"/>
+    <child link="cooler"/>
+    <origin xyz="0.0141208195 -0.00269656122 0.00598974089" rpy="0 0 0"/>
+  </joint>
+
+  <link name="imu">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/imu.stl"/>
+      </geometry>
+      <material name="gris"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.0229999962 0.0132000003 0.0122999992"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.00206400759"/>
+      <inertia ixx="5.94931752e-08" ixy="-1.33759162e-09" ixz="6.11189764e-09" iyy="8.81455349e-08" iyz="7.6834879e-10" izz="1.08026162e-07"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_imu" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu"/>
+    <origin xyz="0.0582833129 0.000497429489 0.0254338893" rpy="0 0 0"/>
+  </joint>
+
+  <link name="soporte_tof">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/soporte_tof.stl"/>
+      </geometry>
+      <material name="gris"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.0281331711 0.122973961 0.04"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.0138248256"/>
+      <inertia ixx="2.09361932e-05" ixy="2.68484124e-08" ixz="-8.62380196e-08" iyy="2.60268648e-06" iyz="1.44128649e-08" izz="1.97142351e-05"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_soporte_tof" type="fixed">
+    <parent link="base_link"/>
+    <child link="soporte_tof"/>
+    <origin xyz="0.0894200497 -5.31298417e-05 0.043337685" rpy="0 0 0"/>
+  </joint>
+
+  <link name="tof_1">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/tof_1.stl"/>
+      </geometry>
+      <material name="gris"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.0118999939 0.0105999997 0.025"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.000997610931"/>
+      <inertia ixx="3.8424373e-08" ixy="1.98007601e-09" ixz="-1.33761236e-13" iyy="3.20571686e-08" iyz="1.45920923e-13" izz="1.19069726e-08"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_tof_1" type="fixed">
+    <parent link="soporte_tof"/>
+    <child link="tof_1"/>
+    <origin xyz="0.00465976221 0.00258829801 0.00237684396" rpy="0 0 0"/>
+  </joint>
+
+  <link name="tof_1_frame"/>
+  <joint name="joint_tof_1_frame" type="fixed">
+    <parent link="tof_1"/>
+    <child link="tof_1_frame"/>
+    <origin xyz="0 0 0" rpy="0 -0.000217791281 -9.21211452e-05"/>
+  </joint>
+
+  <link name="tof_2">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/tof_2.stl"/>
+      </geometry>
+      <material name="gris"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.0135726929 0.0101798668 0.025"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.000997610526"/>
+      <inertia ixx="3.51177665e-08" ixy="3.74711852e-09" ixz="-1.88745279e-13" iyy="3.53637554e-08" iyz="5.93854556e-14" izz="1.19069701e-08"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_tof_2" type="fixed">
+    <parent link="soporte_tof"/>
+    <child link="tof_2"/>
+    <origin xyz="-0.00926432389 0.0495482029 0.00237684399" rpy="0 0 0"/>
+  </joint>
+
+  <link name="tof_2_frame"/>
+  <joint name="joint_tof_2_frame" type="fixed">
+    <parent link="tof_2"/>
+    <child link="tof_2_frame"/>
+    <origin xyz="0 0 0" rpy="0 -0.000211463345 0.523512481"/>
+  </joint>
+
+  <link name="tof_3">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/tof_3.stl"/>
+      </geometry>
+      <material name="gris"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.0106057053 0.0133138428 0.025"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.000997610519"/>
+      <inertia ixx="3.8547355e-08" ixy="-1.76704363e-09" ixz="-4.28726072e-14" iyy="3.19341611e-08" iyz="1.92993966e-13" izz="1.19069692e-08"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_tof_3" type="fixed">
+    <parent link="soporte_tof"/>
+    <child link="tof_3"/>
+    <origin xyz="-0.00727696638 -0.0450810421 0.00237684397" rpy="0 0 0"/>
+  </joint>
+
+  <link name="tof_3_frame"/>
+  <joint name="joint_tof_3_frame" type="fixed">
+    <parent link="tof_3"/>
+    <child link="tof_3_frame"/>
+    <origin xyz="0 0 0" rpy="0 -0.000216623583 -0.523693553"/>
+  </joint>
+
+  <link name="montaje_camara">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/montaje_camara.stl"/>
+      </geometry>
+      <material name="gris"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.199933685 0.2 0.021"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.149979474"/>
+      <inertia ixx="0.000306667959" ixy="-4.60344489e-09" ixz="-4.04205073e-06" iyy="0.00031188965" iyz="3.6433173e-10" izz="0.000615337498"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_montaje_camara" type="fixed">
+    <parent link="base_link"/>
+    <child link="montaje_camara"/>
+    <origin xyz="0.00251571445 -3.81497548e-05 0.0686135985" rpy="0 0 0"/>
+  </joint>
+
+  <link name="camara">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_description/meshes/camara.stl"/>
+      </geometry>
+      <material name="gris"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.0700617485 0.0939749908 0.0461665039"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.096194326"/>
+      <inertia ixx="5.53912454e-05" ixy="2.83103447e-08" ixz="-1.29325176e-05" iyy="4.59130533e-05" iyz="2.0861865e-08" izz="6.90863668e-05"/>
+    </inertial>
+  </link>
+
+  <joint name="joint_camara" type="fixed">
+    <parent link="montaje_camara"/>
+    <child link="camara"/>
+    <origin xyz="0.0310921372 0.000106799373 0.0320497419" rpy="0 0 0"/>
+  </joint>
+
+  <link name="camara_optical_frame"/>
+  <joint name="joint_camara_optical_frame" type="fixed">
+    <parent link="camara"/>
+    <child link="camara_optical_frame"/>
+    <origin xyz="0 0 0" rpy="-1.5707963 0 -1.5707963"/>
+  </joint>
+
+</robot>

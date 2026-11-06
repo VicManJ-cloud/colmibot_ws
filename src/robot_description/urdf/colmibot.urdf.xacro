@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!-- Archivo principal del modelo. Este SI se edita a mano.        -->
+<!-- La geometria vive en generated/ y la regenera el script.      -->
+<robot name="colmibot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ============== PARAMETROS DEL ROBOT (editables) ============== -->
+  <!-- Cambiar un valor y recompilar; el efecto se ve en RViz.       -->
+  <xacro:property name="separacion_llantas" value="0.177679"/>   <!-- distancia entre ruedas (m) -->
+  <xacro:property name="radio_llanta" value="0.029998"/>   <!-- radio de la rueda (m) -->
+  <xacro:property name="altura_chasis" value="0.0432855681"/>   <!-- del suelo al origen de base_link (m) -->
+  <xacro:property name="altura_camara" value="0.130449"/>   <!-- altura de la camara sobre base_link (m) -->
+
+  <!-- ============== GEOMETRIA MEDIDA DESDE EL CAD ================= -->
+  <xacro:include filename="$(find robot_description)/urdf/generated/colmibot_geometria.urdf.xacro"/>
+
+  <!-- ============== AGREGADOS DEL EQUIPO ========================== -->
+  <!-- Aqui van sensores extra, plugins de Gazebo, frames propios.   -->
+  <!-- Nada de esto se pierde al regenerar la geometria.             -->
+
+</robot>
