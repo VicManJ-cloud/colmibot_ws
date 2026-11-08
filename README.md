@@ -318,211 +318,154 @@ Después de modificar la configuración de instalación, es necesario volver a e
 
 # Actividad 9 — Representación virtual del robot
 
-Modelo URDF del COLMIBOT generado a partir del ensamble de SolidWorks y
+Modelo URDF del COLMIBOT construido a partir del ensamble de SolidWorks y
 visualizable en RViz.
+
+Esta sección resume el trabajo. El detalle completo está en dos documentos del
+repositorio:
+
+- **[`GUIA_A_MANO.md`](GUIA_A_MANO.md)** — el procedimiento definitivo, en ocho
+  fases, tal como debe reproducirse.
+- **[`PROCESO.md`](PROCESO.md)** — la bitácora de todo lo que se intentó,
+  incluidos los caminos que no funcionaron y por qué.
 
 ## Participación
 
-Victor Manuel Jiménez González — exportación del CAD, generador, modelo URDF,
+Victor Manuel Jiménez González — exportación del CAD, construcción del modelo,
 pruebas en RViz y documentación.
 
 ## Resultado obtenido
 
-Modelo de **20 módulos** y **25 eslabones** que reproduce el robot físico:
-chasis, tracción diferencial, batería, electrónica de control, Raspberry Pi 5
-con su disipador, unidad inercial, tres sensores de distancia por tiempo de
-vuelo y cámara. Las dos ruedas de tracción corresponden a articulaciones
-móviles; los demás elementos se modelaron como uniones fijas.
+Modelo que reproduce el robot físico con esta estructura de eslabones:
 
-Masa total estimada: **1.97 kg**.
+```
+base_footprint                    (en el piso)
+└─ base_link                      (cuerpo, a la altura del eje de las llantas)
+   ├─ wheel_left_link             (llanta izquierda, gira)
+   ├─ wheel_right_link            (llanta derecha, gira)
+   ├─ camera_link
+   │  └─ camera_optical_frame     (convención óptica de REP-103)
+   ├─ imu_link
+   ├─ tof_left_link
+   ├─ tof_center_link
+   └─ tof_right_link
+```
+
+La geometría se reparte en **ocho mallas**: seis que integran el cuerpo y dos
+para las llantas, que son las únicas piezas móviles. Las masas y los tensores
+de inercia provienen de las propiedades físicas del CAD, con los materiales ya
+asignados.
+
+El paquete admite dos modos de visualización, seleccionables al lanzarlo:
+
+| Modo | Geometría | Para qué sirve |
+|---|---|---|
+| `use_meshes:=true` *(predeterminado)* | Las mallas reales del CAD | El resultado final |
+| `use_meshes:=false` | Figuras primitivas con medidas estimadas | Verificar la estructura sin depender de las mallas |
 
 ## Herramientas y recursos empleados
 
-| Herramienta | Versión | Función |
-|---|---|---|
-| SolidWorks Design Standard | 2026 SP4.1 | Exportación de la geometría del ensamble a STL |
-| Python | 3.x | Lenguaje del generador |
-| trimesh | 5.x | Lectura de mallas, cálculo de centroides e inercias |
-| fast-simplification | — | Reducción de triángulos de las mallas visuales |
-| PyYAML | 6.x | Lectura de la configuración del robot |
-| RViz2 | incluida en ROS Jazzy | Visualización |
-
-Paquetes de ROS requeridos: `robot_state_publisher`,
-`joint_state_publisher_gui`, `rviz2` y `xacro`.
+| Herramienta | Función |
+|---|---|
+| SolidWorks Design Standard 2026 | Crear sistemas de coordenadas, medir, obtener masas y exportar las mallas |
+| Ubuntu 24.04 + ROS 2 Jazzy | Entorno de ejecución |
+| RViz2 | Visualización |
+| Editor de texto | Redacción de los archivos `.xacro` |
+| Báscula de cocina | Contrastar las masas del CAD con las reales |
 
 Recursos externos consultados:
 
-- Archivos CAD del ensamble COLMIBOT, proporcionados por el curso.
-- Hoja de datos del sensor **VL53L1X** de STMicroelectronics, que especifica un
-  campo de visión típico de 27° y un alcance máximo de 4 m. Se utilizó para
-  evaluar la cobertura del arreglo de sensores.
-  <https://www.st.com/en/imaging-and-photonics-solutions/vl53l1x.html>
+- Archivos CAD del ensamble COLMIBOT y su lista de materiales, proporcionados
+  por el curso.
 - **REP-103**, que define la convención de ejes y unidades en ROS, y
   **REP-105**, que establece los marcos de referencia de robots móviles.
+- Hoja de datos del sensor **VL53L1X** de STMicroelectronics: campo de visión
+  típico de 27° y alcance máximo de 4 m.
+  <https://www.st.com/en/imaging-and-photonics-solutions/vl53l1x.html>
 
 ## Procedimiento
 
-El enfoque adoptado consiste en **generar el URDF a partir del CAD en lugar de
-redactarlo manualmente**. Ninguna coordenada se captura a mano: todas se miden
-sobre la geometría exportada. Si una pieza cambia de posición en SolidWorks,
-basta reexportar y ejecutar nuevamente el generador.
+El método consiste en **extraer del CAD las dos cosas que ROS necesita** —la
+estructura y la forma— y expresarlas en los formatos que ROS entiende. El
+trabajo se organiza en ocho fases, detalladas en `GUIA_A_MANO.md`:
 
-```
-CAD (SolidWorks)
-      │  exportación a STL conservando las coordenadas del ensamble
-      ▼
-export_stl/  (95 archivos)
-      │  tools/generar_modelo.py + tools/robot.yaml
-      ▼
-robot_description/  (URDF + mallas + lanzamiento + configuración de RViz)
-```
+| Fase | Qué se hace | Qué produce |
+|---|---|---|
+| 1 | Preparar una copia de trabajo del CAD | Copia intacta del original |
+| 2 | Decidir qué pieza se dibuja, cuál se omite y cuál se sustituye por una caja | Criterio de agrupación |
+| 3 | Crear en SolidWorks los sistemas de coordenadas con la convención de ROS | Marco `ROS` y el de cada llanta |
+| 4 | Medir cada posición respecto a ese marco | Hoja de medidas |
+| 5 | Obtener masa, centro de masa e inercia con las propiedades físicas | Hoja de masas |
+| 6 | Exportar las mallas agrupadas por color | Ocho archivos STL |
+| 7 | Escribir los archivos `.xacro` del paquete | Modelo completo |
+| 8 | Compilar y abrir en RViz | Verificación |
 
-### 1. Exportación desde SolidWorks
-
-Se abre el archivo `CLM-EnsambleColmibot.SLDASM` y se utiliza la opción
-**Archivo → Guardar como → STL**. Tres parámetros determinan la utilidad del
-resultado:
+Tres parámetros de la exportación a STL determinan si el resultado sirve:
 
 | Parámetro | Valor | Justificación |
 |---|---|---|
-| Unidades | Milímetros | Corresponde a la unidad del ensamble |
-| *Guardar todos los componentes en un solo archivo* | **Desactivado** | Se requiere un archivo STL por pieza para agruparlas posteriormente por módulo |
-| *No trasladar datos de salida STL a espacio positivo* | **Activado** | Parámetro crítico. De no activarse, SolidWorks reubica cada pieza en su propio origen y se pierden las posiciones del ensamble, que son precisamente las que determinan el origen de cada articulación |
-| Resolución | Fina | La reducción posterior de triángulos controla el peso de los archivos |
-
-El resultado consiste en 95 archivos STL, uno por cada instancia de pieza.
-
-**Verificación de la exportación.** Antes de continuar se comprueba que las
-coordenadas se hayan conservado, midiendo la posición de ambas llantas:
-
-```bash
-python3 -c "import trimesh,glob; [print(f[-28:], trimesh.load(f,force='mesh').centroid.round(2)) for f in glob.glob('*Llanta*.STL')]"
-```
-
-Los resultados deben ser simétricos, aproximadamente x = −88.84 mm y
-x = +88.84 mm. Si ambos valores se aproximan al origen, el parámetro de espacio
-positivo quedó mal configurado.
-
-### 2. Generación del paquete
-
-```bash
-python3 tools/generar_modelo.py tools/robot.yaml export_stl/ robot_description/
-```
-
-El script aplica la siguiente secuencia a cada módulo definido en `robot.yaml`:
-
-1. **Agrupación.** Reúne los archivos STL cuyo nombre contenga los patrones
-   asociados al módulo. De esta manera el módulo `base` integra 15 piezas
-   —base, cuerpo, plato y doce postes— en una sola malla.
-2. **Rotación y escalamiento.** El CAD emplea el eje **Y como vertical** y
-   orienta el frente hacia **−Z**; ROS utiliza la convención REP-103, con
-   **X al frente, Y hacia la izquierda y Z hacia arriba**. Se aplica una única
-   transformación que realiza el cambio de marco y convierte milímetros a
-   metros.
-3. **Centrado.** Se calcula el centroide de cada módulo y se desplaza la malla
-   para situarlo en el origen. El centroide se conserva porque la diferencia
-   entre el del elemento hijo y el del padre constituye el origen de la
-   articulación que los une.
-4. **Filtrado de piezas de volumen reducido.** Se descartan los sólidos
-   independientes menores al umbral configurado.
-5. **Cálculo de masa e inercia** a partir del volumen y la densidad del
-   material asignado.
-6. **Determinación de la orientación de los sensores** a partir de su
-   geometría.
-7. **Reducción de triángulos** de la malla visual y generación de una
-   primitiva de colisión.
-8. **Escritura** del URDF en formato xacro, junto con las mallas, el archivo de
-   lanzamiento y la configuración de RViz.
-
-### 3. Compilación
-
-```bash
-cd ~/colmibot_ws
-colcon build --packages-select robot_description --symlink-install
-```
+| Formato | Binario | Pesa alrededor de cinco veces menos que el ASCII y ROS lee ambos |
+| Unidades | Milímetros | Corresponde a la unidad del ensamble; la conversión a metros ocurre después |
+| *No convertir los datos de salida a espacio positivo* | **Activado** | Parámetro crítico. De no activarse, SolidWorks desplaza cada pieza para que ninguna coordenada sea negativa, con lo que todas quedan amontonadas y se pierde su posición dentro del ensamble |
 
 ## Decisiones de diseño y simplificaciones
 
-Las simplificaciones se determinaron conforme a los objetivos del proyecto: el
+Las simplificaciones se eligieron conforme a los objetivos del proyecto: el
 modelo debe **presentar una apariencia fiel al robot físico** y servir como
-base para navegación y simulación. No se simplificó ningún elemento que
-comprometiera alguno de esos dos propósitos.
+base para navegación y simulación.
 
-### Agrupación por módulo funcional
+### Qué se dibuja y qué no
 
-Las 95 instancias se agruparon en 20 módulos. Modelar cada tornillo como un
-eslabón independiente volvería ilegible el URDF y poblaría el árbol de
-transformadas con marcos carentes de significado físico. El criterio de
-agrupación fue funcional: los elementos que se desplazan en conjunto y no
-poseen un sensor propio integran un mismo eslabón.
+Cada pieza del CAD recibió uno de tres destinos:
 
-### Eliminación de piezas de volumen reducido
+| Destino | Piezas | Criterio |
+|---|---|---|
+| **Se dibuja** | Estructura, llantas, motores, ruedas locas, sensores e interruptores | Forman la silueta del robot o son sensores |
+| **Se omite** | Driver Cytron, BMS, celdas 18650, Raspberry Pi y su disipador | Quedan ocultas dentro del cuerpo o tras la carcasa. La Raspberry y su disipador suman además 42 piezas de alto costo de dibujado |
+| **Se sustituye por una caja** | ESP32 con su placa de expansión, y el convertidor XL4015 | Están a la vista en el piso superior, y una caja de sus mismas dimensiones basta |
 
-Se descartaron los sólidos independientes menores al umbral definido, que
-corresponden a pines de conectores, tornillos M2, arandelas y resortes.
-Resultan imperceptibles a la escala en que se observa el robot y representan
-decenas de miles de triángulos. En términos concretos, se eliminaron
-**1 840 piezas** del módulo de electrónica y **6 006** del módulo de la
-Raspberry Pi.
+Omitir una pieza del dibujo **no elimina su masa**: se contabiliza igual al
+calcular las inercias.
 
-El umbral se definió como un parámetro configurable
-(`descartar_menores_mm3`), ajustable de forma global o por módulo; asignarle el
-valor cero conserva la totalidad de la geometría.
+### Agrupación por método de fabricación
+
+Las mallas se agruparon según cómo se fabrica cada pieza, criterio que además
+define su color:
+
+| Grupo | Contenido |
+|---|---|
+| `impreso_3d` | Cuerpo, soportes, separadores, postes, carcasa de la Raspberry Pi |
+| `placas_laser` | Las tres placas de corte láser que forman los pisos |
+| `motores` | Los dos motorreductores |
+| `ruedas_locas` | Las dos ruedas locas |
+| `camara` | Cámara, lente y brazo |
+| `electronica` | Los tres sensores de distancia, la unidad inercial y los interruptores |
+| `wheel_left` / `wheel_right` | Cada llanta por separado |
+
+Las llantas van solas porque **giran**: cada una es su propio eslabón y
+necesita su malla centrada en su eje.
+
+### Eslabones de sensor sin geometría
+
+Los sensores existen en el modelo como marcos de referencia sin forma visible.
+Su apariencia ya está contenida en la malla del grupo `electronica` o en la de
+la cámara; lo que ROS necesita de ellos es **dónde están y hacia dónde
+apuntan**, para interpretar sus mediciones.
 
 ### Colisiones mediante primitivas geométricas
 
-La geometría visual emplea las mallas con triángulos reducidos, mientras que la
-geometría de colisión utiliza **cajas y cilindros** ajustados a la envolvente de
-cada módulo. Un motor de física que debe evaluar contactos contra mallas de
-miles de triángulos resulta impracticable en tiempo real. Para efectos de
-navegación la envolvente es suficiente, y constituye la práctica habitual en
-simulación robótica.
-
-Las ruedas emplean cilindros, orientados sobre el eje Y mediante la rotación
-correspondiente.
-
-### Ruedas vinculadas directamente a `base_link`
-
-La cadena física del robot es chasis → soporte → motorreductor → llanta. En el
-URDF, en cambio, las llantas se vinculan **directamente a `base_link`**,
-mientras que soportes y motores permanecen como eslabones visuales fijos al
-chasis.
-
-La razón es funcional: los controladores de tracción diferencial requieren la
-separación entre ruedas medida respecto al chasis. Encadenarlas a través de dos
-eslabones intermedios convierte ese parámetro en una magnitud indirecta y
-añade profundidad al árbol de transformadas sin beneficio alguno. La apariencia
-visual del modelo es idéntica en ambos casos.
-
-### Disipador modelado como elemento fijo
-
-El ventilador de la Raspberry Pi modifica su velocidad por modulación de ancho
-de pulso en función de la temperatura del procesador, pero dicho control lo
-ejerce el hardware de la tarjeta y no ROS. Se modeló como un eslabón fijo: su
-apariencia es la misma y se evita incorporar una articulación que ningún nodo
-del sistema publicaría.
-
-### Ruedas locas como eslabón único y fijo
-
-Son elementos pasivos que no reciben consignas de control. Para efectos de
-visualización y navegación basta con representar su presencia geométrica.
-
-### Marcos de referencia de los sensores
-
-Cada sensor de distancia y la cámara cuentan con un marco de referencia propio,
-adicional a su eslabón visual:
-
-- Los sensores de tiempo de vuelo incorporan el marco `tof_N_frame`, con el eje
-  X orientado en la dirección de medición.
-- La cámara incorpora el marco `camara_optical_frame`, con la convención óptica
-  establecida en REP-103 —Z hacia el frente, X hacia la derecha, Y hacia
-  abajo—, que es la que esperan los nodos de procesamiento de imagen.
+La geometría visual usa las mallas; la de colisión usa cajas y cilindros. Un
+motor de física que debe evaluar contactos contra mallas de miles de triángulos
+resulta impracticable en tiempo real, y para navegación la envolvente es
+suficiente.
 
 ### Incorporación de `base_footprint`
 
-Se agregó el marco de referencia estándar para robots móviles, correspondiente
-a la proyección del robot sobre el plano del piso. Es el marco que requiere
-Nav2 y el que se emplea como *Fixed Frame* en RViz.
+`base_link` se sitúa en el punto medio entre las dos llantas, a la altura de su
+eje, porque es el punto sobre el que gira un robot diferencial cuando una rueda
+avanza y la otra retrocede. Debajo se agregó `base_footprint`, la proyección
+sobre el piso, que es el marco que requiere Nav2 y el que se usa como *Fixed
+Frame* en RViz.
 
 ## Estructura del paquete `robot_description`
 
@@ -530,34 +473,32 @@ Nav2 y el que se emplea como *Fixed Frame* en RViz.
 robot_description/
 ├── CMakeLists.txt
 ├── package.xml
+├── inertia/                       # masas y propiedades extraídas del CAD
+│   ├── componentes_cad.csv
+│   ├── masas.csv
+│   └── masas_usadas.csv
 ├── tools/
-│   ├── generar_modelo.py          # genera el contenido a partir de las STL
-│   └── robot.yaml                 # diseño: módulos, jerarquía, juntas, materiales
+│   ├── export_stl_solidworks.ps1  # exportación de mallas
+│   ├── export_mass_solidworks.ps1 # exportación de masas
+│   ├── prepare_meshes.py          # cambio de ejes, escala y agrupación
+│   └── compute_inertial.py        # tensores de inercia por eslabón
 ├── urdf/
-│   ├── colmibot.urdf.xacro        # ARCHIVO PRINCIPAL — edición manual
+│   ├── colmibot.urdf.xacro        # archivo principal: eslabones y uniones
+│   ├── colmibot_params.xacro      # medidas
+│   ├── macros.xacro               # plantillas de rueda, sensor e inercias
+│   ├── materials.xacro            # colores por grupo
 │   └── generated/
-│       └── colmibot_geometria.urdf.xacro   # GENERADO — no editar
-├── meshes/                        # una malla por módulo, expresada en metros
+│       ├── colmibot_meshes.xacro  # medidas reales y lista de mallas
+│       └── colmibot_inertial.xacro# masas e inercias
+├── meshes/                        # ocho mallas, en metros
 ├── launch/
 │   └── display.launch.py
 └── rviz/
-    └── colmibot.rviz
+    └── display.rviz
 ```
 
-### Distinción entre archivos generados y editables
-
-Esta separación responde a una decisión deliberada:
-
-- **`urdf/generated/colmibot_geometria.urdf.xacro`** contiene los eslabones y
-  articulaciones medidos sobre el CAD. Se **sobrescribe por completo** en cada
-  ejecución del generador, por lo que no debe editarse manualmente.
-- **`urdf/colmibot.urdf.xacro`** constituye el archivo principal: define los
-  parámetros del modelo e incorpora al anterior. El generador **nunca lo
-  modifica**. En él se incorporan los ajustes del equipo, los sensores
-  adicionales y los complementos de Gazebo.
-
-De esta forma el CAD puede reexportarse cuantas veces sea necesario sin perder
-el trabajo realizado manualmente.
+Los archivos bajo `generated/` contienen lo medido del CAD y se reescriben al
+regenerar; los demás se editan a mano.
 
 ## Instrucciones de ejecución
 
@@ -573,237 +514,145 @@ ros2 launch robot_description display.launch.py
 ```
 
 Se abren dos ventanas: RViz con el modelo cargado y la interfaz de control
-deslizante para manipular las articulaciones.
+deslizante para girar las llantas.
 
-### Regeneración a partir del CAD
+Opciones disponibles al lanzar:
 
-Procedimiento necesario únicamente cuando el ensamble sufre modificaciones.
-Requiere reexportar previamente los archivos STL.
-
-```bash
-pip install trimesh fast-simplification pyyaml
-python3 src/robot_description/tools/generar_modelo.py \
-        src/robot_description/tools/robot.yaml \
-        <carpeta_con_los_archivos_STL> \
-        src/robot_description
-```
+| Opción | Valor predeterminado | Efecto |
+|---|---|---|
+| `use_meshes` | `true` | `false` dibuja el robot con figuras primitivas |
+| `gui` | `true` | `false` omite la ventana de controles deslizantes |
+| `rviz` | `true` | `false` no abre RViz |
 
 ## Modificación del modelo
 
-Los parámetros ajustables se encuentran al inicio de
-`urdf/colmibot.urdf.xacro`:
+Las medidas están reunidas en `urdf/colmibot_params.xacro` como propiedades con
+nombre. Se emplea **xacro** en lugar de URDF simple porque este último es XML
+sin variables: cambiar el radio de una rueda obligaría a editar el valor en
+varios puntos y mantener la consistencia manualmente. Xacro permite escribir
+`${wheel_radius}` y que una sola definición gobierne todos los usos.
 
-```xml
-<xacro:property name="separacion_llantas" value="0.177679195"/>
-<xacro:property name="radio_llanta"       value="0.0299977789"/>
-<xacro:property name="altura_chasis"      value="0.0432855681"/>
-<xacro:property name="altura_camara"      value="0.130448889"/>
-```
-
-Se emplea **xacro** en lugar de URDF simple porque este último es XML sin
-variables: modificar el radio de una rueda obligaría a editar el valor en
-diversos puntos del archivo y a mantener la consistencia manualmente. Xacro
-incorpora propiedades con nombre y expresiones aritméticas —por ejemplo
-`${separacion_llantas/2}`—, que se expanden antes de que ROS procese el
-archivo. El archivo de lanzamiento procesa el xacro en tiempo de ejecución, de
-modo que no se requiere una conversión manual previa.
-
-A manera de ejemplo, al modificar `radio_llanta` de `0.03` a `0.04` y volver a
-ejecutar el lanzamiento, las ruedas aumentan de tamaño y el chasis se eleva,
-puesto que la altura del robot se calcula a partir de ese valor.
-
-La opción `--symlink-install` permite que baste con reiniciar el lanzamiento,
-sin necesidad de recompilar.
+La opción `--symlink-install` permite que baste con reiniciar el lanzamiento
+tras editar un `.xacro`, sin recompilar.
 
 ## Problemas encontrados y soluciones implementadas
 
-### 1. Incompatibilidad del exportador oficial de SolidWorks a URDF
+### 1. Una primera versión del modelo quedó descartada
 
-El complemento `sw_urdf_exporter` admite hasta la versión **SolidWorks 2021**,
-mientras que el equipo trabaja con la versión **2026 SP4.1**. En consecuencia,
-el complemento no aparece en el menú correspondiente.
+Antes del procedimiento actual se construyó una versión preliminar mediante un
+generador automático que deducía la estructura del URDF midiendo las mallas
+exportadas. Funcionaba y llegó a visualizarse en RViz, pero presentaba dos
+inconvenientes: las masas eran estimaciones calculadas por volumen y densidad,
+no valores reales, y la agrupación en veinte módulos resultaba innecesariamente
+pesada.
 
-**Solución.** Se optó por exportar únicamente la geometría en formato STL y
-desarrollar un generador que deduce la estructura del URDF a partir de
-mediciones sobre esa geometría. El resultado superó al que habría producido el
-exportador: el modelo queda parametrizado y es reproducible mediante un solo
-comando.
+**Solución.** Se rehízo el modelo con el procedimiento de `GUIA_A_MANO.md`, que
+toma las masas directamente de las propiedades físicas del CAD y agrupa la
+geometría por método de fabricación, con ocho mallas en lugar de veinte
+módulos. La bitácora de la versión preliminar se conserva en `PROCESO.md`.
 
-### 2. Discrepancia entre los ejes del CAD y los de ROS
+### 2. El exportador oficial de SolidWorks a URDF no es compatible
 
-SolidWorks entregó el ensamble con el eje **Y como vertical**, mientras que ROS
-emplea **Z hacia arriba y X al frente**, conforme a REP-103. Con la convención
-incorrecta, el eje de giro de las ruedas queda sobre X cuando un robot
-diferencial lo requiere sobre Y, lo que invalida tanto la odometría como la
-navegación.
+El complemento `sw_urdf_exporter` admite hasta la versión SolidWorks 2021,
+mientras que el equipo trabaja con la 2026. No aparece en el menú de
+complementos.
 
-**Solución.** El generador aplica la rotación a las mallas y a los centroides
-antes de escribir el modelo, de manera que el URDF resultante no contiene
-rotaciones correctivas.
+**Solución.** Se exportó únicamente la geometría y se construyeron a mano los
+archivos de descripción, apoyándose en los sistemas de coordenadas creados en
+el propio CAD.
 
-### 3. Valores de masa desproporcionados en los módulos con varias tarjetas
+### 3. Onshape no permite exportar piezas repetidas
 
-El módulo de electrónica reportó una masa de **2 275 g**. La causa fue que, al
-no tratarse de mallas cerradas, la masa se aproximaba mediante **una caja
-envolvente global** que, al contener cinco tarjetas separadas entre sí,
-incorporaba también el espacio vacío intermedio y lo consideraba material
-macizo.
+Antes de disponer de SolidWorks se recurrió a Onshape, que abrió el ensamble
+completo sin problema. Sin embargo, su exportación ofrece únicamente *Export
+unique parts*, que guarda una sola vez cada pieza distinta: de las dos llantas
+habría salido una, y de los tres sensores de distancia, uno.
 
-**Solución.** Se modificó el cálculo para emplear **una caja envolvente por
-cada componente independiente**, sumando las contribuciones y trasladando cada
-tensor de inercia al centroide del módulo mediante el teorema de ejes
-paralelos. La masa del módulo descendió a 172 g, y la del robot completo pasó
-de 4 186 g a 1 973 g.
+**Solución.** Se consiguió SolidWorks, que exporta cada instancia por separado.
 
-### 4. Sesgo en los ángulos de los sensores de distancia
+### 4. Discrepancia entre los ejes del CAD y los de ROS
 
-La orientación de los sensores se dedujo inicialmente mediante análisis de
-componentes principales sobre los vértices de cada malla. El procedimiento
-arrojó ángulos de −8.1°, +21.9° y +51.9°: correctamente espaciados 30° entre
-sí, pero desplazados respecto al eje longitudinal del robot.
+El ensamble emplea el eje Y como vertical y orienta el frente hacia −Z, con
+medidas en milímetros. ROS utiliza la convención REP-103: X al frente, Y hacia
+la izquierda, Z hacia arriba, y metros. Sin corregirlo, el robot aparecería
+acostado y mil veces más grande.
 
-La causa resultó ser el **conector de perfil elevado de la tarjeta**, que
-desplaza la dispersión de los vértices y, con ello, inclina el eje principal.
-Al reproducir la geometría en una simulación se obtuvo un sesgo constante de
-7.8° y el mismo índice de confianza reducido (0.42) que reportaba el script.
+**Solución.** Se creó en SolidWorks un sistema de coordenadas con la
+orientación de ROS, y todas las mediciones se tomaron respecto a él. La
+conversión de unidades se aplica al preparar las mallas.
 
-**Solución.** Se adoptó como método principal la identificación de la **cara
-plana de mayor área** de la tarjeta, cuya normal corresponde a la dirección de
-medición sin sesgo alguno. Los ángulos corregidos resultaron **−30°, 0° y
-+30°**, simétricos respecto al eje del robot. Considerando un campo de visión
-de 27° por sensor, los conos de medición quedan prácticamente contiguos.
+### 5. El ángulo de los sensores laterales no pudo medirse automáticamente
 
-### 5. Inercias de magnitud reducida escritas como cero
+La orientación de los sensores de distancia no se deduce de forma fiable a
+partir de la geometría exportada.
 
-El formato numérico empleaba seis posiciones decimales fijas. La inercia de la
-unidad inercial equivale a 1.26 × 10⁻⁸ kg·m², valor que con dicho formato se
-escribía literalmente como `0` en el archivo XML. El defecto afectaba a la
-unidad inercial, los tres sensores de distancia y los interruptores. Una
-inercia nula provoca que Gazebo rechace el eslabón correspondiente, y el error
-no se habría manifestado sino hasta la etapa de simulación.
+**Solución.** Se tomó directamente del CAD, donde los dos sensores laterales
+están girados 30° respecto al central. Con un campo de visión de 27° por
+sensor, los conos de medición quedan prácticamente contiguos.
 
-**Solución.** Se modificó el formato para emplear cifras significativas.
-Adicionalmente se incorporó una **validación automática** en el generador, que
-revisa masas, inercias, geometrías de colisión y orígenes, y reporta cualquier
-valor inválido antes de escribir los archivos.
+### 6. El modelo se mostraba completamente negro en RViz
 
-### 6. Piezas excluidas del modelo
+Al abrir el modelo con las mallas activadas, todas las piezas aparecían negras
+pese a que `materials.xacro` define diez colores distintos.
 
-Los interruptores `CLM-KCD1` no coincidían con ningún patrón definido en el
-archivo de configuración. El generador los reportó en su listado de archivos
-STL sin asignar.
+Se verificó que las definiciones llegaran al URDF expandido, que cada bloque
+`<visual>` referenciara su material, que el enlace de la carpeta de instalación
+apuntara al archivo correcto y que las normales de las mallas fueran
+consistentes. Todo resultó correcto.
 
-**Solución.** Se incorporó el módulo correspondiente. El reporte de piezas sin
-asignar quedó establecido como verificación de rutina: un valor distinto de
-cero indica geometría faltante.
+**Solución.** El archivo `.xacro` se procesa al arrancar el lanzamiento, de modo
+que una modificación no afecta a una ventana ya abierta. Bastó cerrar RViz y
+volver a lanzar.
 
-### 7. Imposibilidad de ejecutar MeshLab
+### 7. Falla de `colcon build` al crear enlaces simbólicos
 
-La aplicación fallaba con el mensaje `GLEW initialization failed`, atribuible al
-controlador gráfico del equipo.
+El espacio de trabajo se encontraba en una partición exFAT compartida con
+Windows, sistema que no admite enlaces simbólicos, que es el mecanismo que
+emplea `--symlink-install`.
 
-**Solución.** Ejecutarla mediante `LIBGL_ALWAYS_SOFTWARE=1 meshlab`.
-Posteriormente dejó de ser necesaria, dado que la totalidad de las mediciones
-se automatizó con la biblioteca trimesh.
+**Solución.** Trasladar el espacio de trabajo a una partición ext4. exFAT
+tampoco conserva los permisos de Unix ni distingue mayúsculas, lo que habría
+ocasionado problemas con el control de versiones.
 
-### 8. Falla de `colcon build` al crear enlaces simbólicos
+### 8. Error de compilación por entorno sin inicializar
 
-El espacio de trabajo se encontraba en una partición con sistema de archivos
-**exFAT**, compartida con Windows. Dicho sistema no admite enlaces simbólicos,
-que son precisamente el mecanismo que utiliza la opción `--symlink-install`.
+`colcon build` fallaba con `ModuleNotFoundError: No module named 'ament_package'`.
+CMake localizaba los archivos de ROS porque residen en una ruta fija, pero el
+intérprete de Python carecía de la ruta correspondiente.
 
-**Solución.** Trasladar el espacio de trabajo a `~/colmibot_ws`, ubicado en una
-partición ext4. Cabe señalar que exFAT tampoco conserva los permisos de Unix ni
-distingue mayúsculas de minúsculas, lo que habría ocasionado problemas con el
-control de versiones y con las rutas de las mallas.
+**Solución.** Ejecutar `source /opt/ros/jazzy/setup.bash` antes de compilar, y
+eliminar la caché de la compilación fallida.
 
 ### 9. Ausencia de paquetes de ROS
 
-El archivo de lanzamiento fallaba con el mensaje
-`file not found: 'xacro'`.
+El archivo de lanzamiento fallaba con `file not found: 'xacro'`.
 
 **Solución.** Instalar `ros-jazzy-xacro` y `ros-jazzy-joint-state-publisher-gui`
-de manera independiente.
-
-### 10. Modelo situado por debajo del plano del piso
-
-En RViz la retícula atravesaba las llantas por su punto medio, en lugar de
-quedar por debajo de ellas. La retícula representa el plano del suelo —z = 0 en
-el marco `base_footprint`—, de modo que las ruedas deben apoyarse sobre ella.
-
-El origen del problema estaba en el cálculo del parámetro `altura_chasis`. La
-fórmula medía la distancia del piso al **origen absoluto del CAD**, pero
-`base_link` no se ubica en ese punto, sino en el centroide del chasis, 29.8 mm
-por encima. Esa diferencia correspondía exactamente al desplazamiento
-observado.
-
-El indicio determinante fue que la retícula atravesara el **centro** de la
-rueda y no cualquier otra altura, lo que implicaba que el error equivalía
-precisamente a la altura del centroide.
-
-**Solución.** Medir la distancia del piso al centroide del chasis, que es la
-ubicación real de `base_link`:
-
-```python
-# versión anterior
-float(centroides["llanta_der"][2] - radio) * -1
-# versión corregida
-float(centroides["base"][2] - (centroides["llanta_der"][2] - radio))
-```
-
-El valor pasó de 13.5 mm a 43.29 mm. Dado que el archivo principal no se
-sobrescribe durante la regeneración, fue necesario actualizar la propiedad
-manualmente a partir del reporte que emite el generador.
-
-Conviene destacar que este defecto no lo detectó la validación automática, sino
-la revisión visual. El generador verifica masas, inercias y dimensiones, pero
-carece de criterio para determinar que un robot debe encontrarse apoyado sobre
-el piso.
+por separado, en lugar del metapaquete completo.
 
 ## Medidas obtenidas del CAD
 
-La totalidad de los valores fue medida por el generador; ninguno se capturó
-manualmente:
-
 | Parámetro | Valor |
 |---|---|
-| Separación entre ruedas | 177.68 mm |
-| Radio de rueda | 30.00 mm |
-| Altura del origen de `base_link` sobre el piso | 43.29 mm |
-| Altura de la cámara sobre `base_link` | 130.45 mm |
-| Orientación de los sensores de distancia | −30°, 0°, +30° |
-| Masa total estimada | 1.97 kg |
+| Radio de llanta | 30.0 mm |
+| Ancho de llanta | 12.0 mm |
+| Separación entre llantas | 174.1 mm |
+| Envolvente del cuerpo | 200 × 200 × 167 mm |
+| Cámara, respecto al eje de las llantas | 53 mm al frente, 121 mm de altura |
+| Sensor de distancia central | 93 mm al frente, 59 mm de altura |
+| Orientación de los sensores laterales | 30° |
 
 ## Limitaciones conocidas
 
-**Las masas constituyen estimaciones y no mediciones.** Se calculan
-multiplicando el volumen de cada malla por la densidad del material asignado.
-En los casos en que el modelo CAD no conforma un sólido cerrado, el cálculo
-recurre a cajas envolventes, procedimiento que **sobreestima** el valor real.
+**Los colores son provisionales.** Se eligieron para distinguir los grupos de
+piezas, no para reproducir el acabado del robot físico. Varios valores quedan
+por debajo de 0.2 en la escala de luminosidad, lo que en RViz los aproxima al
+negro y dificulta distinguir unas piezas de otras.
 
-El caso más evidente son los **motorreductores, con 369.8 g cada uno**. El
-generador detectó que su malla no está cerrada, es decir, que su superficie
-presenta discontinuidades y no delimita un volumen definido. Sin un volumen
-determinado no es posible calcular la masa a partir de la densidad, por lo que
-el script recurre a la caja envolvente, cuyo volumen sí es conocido. Esa
-aproximación arroja invariablemente un valor por exceso, puesto que la caja
-incorpora todo el espacio vacío que rodea al cuerpo del motor y lo considera
-macizo.
-
-Para efectos de visualización en RViz esta limitación no tiene consecuencias;
-para simulación dinámica sí las tiene. El archivo `robot.yaml` contempla la
-opción `masa_g`, destinada a declarar masas medidas:
-
-```yaml
-  motor_der:
-    # masa_g: 215        # pendiente: determinar mediante pesaje o ficha técnica
-```
-
-Al declararse, el tensor de inercia se reescala conservando su forma.
-
-**Trabajo pendiente.** El curso publicó una versión actualizada de los archivos
-CAD con materiales y pesos asignados. Dicha información se incorporará al
-modelo durante los ajustes finales del robot físico.
+**Las masas provienen del CAD, no de un pesaje.** Son considerablemente más
+confiables que una estimación por volumen y densidad, pero dependen de que los
+materiales asignados en el ensamble correspondan a los reales. Contrastarlas
+con una báscula queda pendiente para los ajustes finales del robot físico.
 
 ---
 
